@@ -44,6 +44,18 @@ write_boot; # use flash_boot to skip ramdisk repack, e.g. for devices with init_
 ## end boot install
 
 
+# Patch vbmeta
+ui_print " "
+ui_print "Disable Android Verified Boot..."
+for vbmeta_blk in /dev/block/by-name/vbmeta*; do
+ ui_print "- Patching $(basename $vbmeta_blk) ..."
+ ${BIN}/vbmeta-disable-verification $vbmeta_blk || {
+  ui_print "! Failed to patching ${vbmeta_blk}!"
+  ui_print "- If the device won't boot after the installation,"
+  ui_print "  please manually disable AVB in TWRP."
+ }
+done
+
 ## init_boot files attributes
 #init_boot_attributes() {
 #set_perm_recursive 0 0 755 644 $RAMDISK/*;
