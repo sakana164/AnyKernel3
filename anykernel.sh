@@ -43,18 +43,48 @@ dump_boot; # use split_boot to skip ramdisk unpack, e.g. for devices with init_b
 write_boot; # use flash_boot to skip ramdisk repack, e.g. for devices with init_boot ramdisk
 ## end boot install
 
+keycode_select() {
+  time=5s
+  
+  ui_print " "
+  ui_print "Disable Android Verified Boot..."
+  ui_print " "
+  ui_print "VBMETA PATCHING CONTROL"
+  ui_print "  [VOL+] : Skip (Default)"
+  ui_print "  [VOL-] : Enable"
+  ui_print " "
+  ui_print "  Select in $time seconds..."
 
-# Patch vbmeta
-ui_print " "
-ui_print "Disable Android Verified Boot..."
-for vbmeta_blk in /dev/block/by-name/vbmeta*; do
- ui_print "- Patching $(basename $vbmeta_blk) ..."
- ${BIN}/vbmeta-disable-verification $vbmeta_blk || {
-  ui_print "! Failed to patching ${vbmeta_blk}!"
-  ui_print "- If the device won't boot after the installation,"
-  ui_print "  please manually disable AVB in TWRP."
- }
-done
+  timeout $time sh ${BIN}/keycheck.sh
+  case $? in
+    1)
+      ui_print "  [SELECTED] : Enable Patching"
+      Patch_vbmeta
+      ;;
+    0)
+      ui_print "  [SELECTED] : Skip Patching"
+      ;;
+    *)
+      ui_print "  [TIMEOUT]  : Skip Patching"
+      pkill keycheck
+      ;;
+  esac
+  ui_print " "
+}
+
+# Patch vbmeta function
+Patch_vbmeta() {
+  for vbmeta_blk in /dev/block/by-name/vbmeta*; do
+    ui_print "- Patching $(basename $vbmeta_blk) ..."
+    ${BIN}/vbmeta-disable-verification $vbmeta_blk || {
+      ui_print "! Failed to patch ${vbmeta_blk}!"
+      ui_print "- If the device won't boot, disable AVB in TWRP."
+    }
+  done
+}
+
+# Execute the control module
+keycode_select
 
 ## init_boot files attributes
 #init_boot_attributes() {
