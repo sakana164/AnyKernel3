@@ -130,7 +130,9 @@ split_boot() {
     dd bs=4096 skip=8 iflag=skip_bytes conv=notrunc if=$BOOTIMG of=ramdisk.cpio.gz;
   else
     (set -o pipefail; magiskboot unpack -h $BOOTIMG 2>&1 | tee infotmp >&2);
-    [ $? == 1 ] && splitfail=1;
+    case $? in
+      1) splitfail=1;;
+    esac;
   fi;
 
   if [ $? != 0 -o "$splitfail" ]; then
